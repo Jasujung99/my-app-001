@@ -1,0 +1,14 @@
+lib/
+|- main.dart
+|- models/
+|  |- book_club.dart
+|  |- book_request.dart
+|  |- meeting.dart
+|  |- user.dart
+|- providers/
+|  |- theme_provider.dart
+|- utils/
+|  |- app_theme.dart
+|- views/
+|  |- home_screen.dart
+|  |- detail_screen.dart
