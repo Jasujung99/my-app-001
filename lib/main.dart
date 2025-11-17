@@ -14,9 +14,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Firebase를 초기화합니다.
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('Firebase initialized successfully.');
+  } catch (e, st) {
+    debugPrint('Firebase initialization failed: $e');
+    debugPrint('$st');
+    rethrow;
+  }
 
   runApp(
     MultiProvider(

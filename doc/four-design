@@ -1,0 +1,462 @@
+import React, { useState } from 'react';
+
+// 색상 팔레트
+const palette = {
+  paper: "#FAF8F1",
+  midnight: "#2F3E4B",
+  grain: "#E8DEC7",
+  ink: "#222426",
+  stardust: "#F4EFE3",
+  accent: "#8A97A6",
+};
+
+// 씨드 데이터
+const seedMeetings = [
+  {
+    id: 1,
+    title: "카뮈 『이방인』",
+    book: "이방인",
+    date: "2025년 1월 20일 (월)",
+    time: "오후 8시",
+    status: "진행중",
+    participants: 8,
+    maxParticipants: 12,
+    questions: [
+      "뫼르소는 왜 무감각한가?",
+      "부조리의 의미는?",
+      "어머니의 죽음에 대한 무관심의 의미"
+    ],
+    hasCard: true
+  },
+  {
+    id: 2,
+    title: "사피엔스 1-3부",
+    book: "사피엔스",
+    date: "2025년 1월 25일 (토)",
+    time: "오후 3시",
+    status: "모집중",
+    participants: 5,
+    maxParticipants: 10,
+    questions: [
+      "인지혁명의 핵심은 무엇인가?",
+      "허구를 믿는 능력이 인간을 특별하게 만들었나?"
+    ],
+    hasCard: true
+  },
+  {
+    id: 3,
+    title: "1984 전체 토론",
+    book: "1984",
+    date: "2025년 2월 1일 (토)",
+    time: "오후 7시",
+    status: "예정",
+    participants: 3,
+    maxParticipants: 8,
+    questions: [
+      "빅 브라더의 감시 체제와 현대 사회",
+      "진리부의 역할과 언론 조작"
+    ],
+    hasCard: false
+  }
+];
+
+const seedHonorMembers = [
+  { num: 1, name: '김◯◯', count: 12 },
+  { num: 2, name: '이◯◯', count: 10 },
+  { num: 3, name: '박◯◯', count: 9 },
+  { num: 4, name: '최◯◯', count: 8 }
+];
+
+// 아이콘 컴포넌트
+const BookOpen = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7"/>
+  </svg>
+);
+
+const ChevronLeft = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polyline points="15 18 9 12 15 6"/>
+  </svg>
+);
+
+const Check = ({ size = 14 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+const Users = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+
+const Star = ({ size = 24 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+  </svg>
+);
+
+const Home = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+);
+
+const Award = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="8" r="7"/>
+    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+  </svg>
+);
+
+const Edit = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+);
+
+// 홈 화면
+function HomeScreen({ onNavigate, meetings }) {
+  return (
+    <div className="w-full h-full flex flex-col" style={{ background: `linear-gradient(to bottom, ${palette.paper}, ${palette.stardust})` }}>
+      {/* 상단바 */}
+      <div className="bg-white bg-opacity-90 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center">
+          <BookOpen size={20} />
+          <span className="ml-2 font-serif font-semibold" style={{ color: palette.ink }}>삼시세독</span>
+        </div>
+        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: palette.grain }}></div>
+      </div>
+
+      {/* 영웅 섹션 */}
+      <div className="flex flex-col items-center pt-6 px-6 pb-4">
+        <div className="relative w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: palette.midnight, opacity: 0.9 }}>
+          <div className="absolute w-1.5 h-1.5 rounded-full" style={{ backgroundColor: palette.stardust, top: '15px', left: '15px' }}></div>
+          <div className="absolute w-1 h-1 rounded-full" style={{ backgroundColor: palette.stardust, top: '25px', right: '20px' }}></div>
+          <div className="absolute w-1.5 h-1.5 rounded-full" style={{ backgroundColor: palette.stardust, bottom: '20px', left: '30px' }}></div>
+        </div>
+
+        <h1 className="text-center font-serif font-semibold text-sm mb-1" style={{ color: palette.ink }}>사람이 중심인</h1>
+        <h1 className="text-center font-serif font-semibold text-sm mb-4" style={{ color: palette.ink }}>독서 커뮤니티</h1>
+
+        <div className="flex gap-2 mb-4">
+          <button className="px-5 py-2 rounded-xl text-white text-xs font-semibold" style={{ backgroundColor: palette.midnight }}>
+            지금 시작
+          </button>
+          <button className="px-4 py-2 rounded-xl text-xs font-semibold bg-white" style={{ color: palette.ink, border: '1px solid rgba(34, 36, 38, 0.13)' }}>
+            둘러보기
+          </button>
+        </div>
+      </div>
+
+      {/* 모임 목록 */}
+      <div className="px-4 flex-1 overflow-y-auto pb-4 space-y-3">
+        <h3 className="font-serif font-semibold text-sm mb-2" style={{ color: palette.ink }}>진행중인 모임</h3>
+        {meetings.map(meeting => (
+          <div 
+            key={meeting.id}
+            onClick={() => onNavigate('detail', meeting)}
+            className="bg-white bg-opacity-90 rounded-2xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="font-serif font-semibold text-sm flex-1" style={{ color: palette.ink }}>{meeting.title}</h3>
+              <span 
+                className="inline-block px-2 py-0.5 rounded-full text-xs ml-2 flex-shrink-0" 
+                style={{ 
+                  backgroundColor: meeting.status === '진행중' ? palette.grain : meeting.status === '모집중' ? '#D1FAE5' : palette.stardust,
+                  color: palette.ink 
+                }}
+              >
+                {meeting.status}
+              </span>
+            </div>
+            <p className="text-xs mb-2" style={{ color: palette.accent }}>{meeting.date} {meeting.time}</p>
+            <div className="flex items-center gap-1 text-xs" style={{ color: palette.accent }}>
+              <Users size={12} />
+              <span>{meeting.participants}/{meeting.maxParticipants}명</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 하단 탭 */}
+      <div className="bg-white bg-opacity-95 px-4 py-3 flex justify-around items-center">
+        <button className="flex flex-col items-center" style={{ color: palette.midnight }}>
+          <Home size={20} />
+        </button>
+        <button onClick={() => onNavigate('review')} className="flex flex-col items-center" style={{ color: palette.accent }}>
+          <Edit size={20} />
+        </button>
+        <button onClick={() => onNavigate('honor')} className="flex flex-col items-center" style={{ color: palette.accent }}>
+          <Award size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 모임 상세 화면
+function MeetingDetailScreen({ onNavigate, meeting }) {
+  return (
+    <div className="w-full h-full flex flex-col" style={{ background: `linear-gradient(to bottom, ${palette.paper}, ${palette.stardust})` }}>
+      {/* 헤더 */}
+      <div className="bg-white bg-opacity-90 px-4 py-3 flex items-center">
+        <button onClick={() => onNavigate('home')}>
+          <ChevronLeft size={20} />
+        </button>
+        <span className="ml-4 font-serif font-semibold text-sm" style={{ color: palette.ink }}>모임 상세</span>
+      </div>
+
+      {/* 모임 정보 카드 */}
+      <div className="px-4 pt-4 pb-3 flex-1 overflow-y-auto">
+        <div className="bg-white bg-opacity-95 rounded-2xl p-4 shadow-sm mb-4">
+          <h2 className="font-serif font-semibold text-base mb-2" style={{ color: palette.ink }}>{meeting.title}</h2>
+          <p className="text-xs mb-3" style={{ color: palette.ink, opacity: 0.7 }}>{meeting.date} {meeting.time}</p>
+          
+          <div className="flex gap-2 mb-3 items-center">
+            <span className="inline-block px-3 py-1 rounded-full text-xs" style={{ backgroundColor: palette.grain, color: palette.ink }}>
+              {meeting.status}
+            </span>
+            <span className="text-xs" style={{ color: palette.accent }}>참여 {meeting.participants}명</span>
+          </div>
+
+          {meeting.hasCard && (
+            <div className="flex items-center text-xs" style={{ color: palette.ink }}>
+              <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: palette.midnight }}></div>
+              진행 카드 준비됨
+            </div>
+          )}
+        </div>
+
+        {/* 참여자 */}
+        <div className="mb-4">
+          <h3 className="font-serif font-semibold text-sm mb-2" style={{ color: palette.ink }}>참여자</h3>
+          <div className="flex gap-2">
+            {[...Array(Math.min(3, meeting.participants))].map((_, i) => (
+              <div key={i} className="w-8 h-8 rounded-full" style={{ backgroundColor: palette.accent, opacity: 0.3 }}></div>
+            ))}
+            {meeting.participants > 3 && (
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs" style={{ backgroundColor: palette.grain, color: palette.ink }}>
+                +{meeting.participants - 3}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 생각거리 */}
+        <div>
+          <h3 className="font-serif font-semibold text-sm mb-2" style={{ color: palette.ink }}>생각거리</h3>
+          <div className="bg-white bg-opacity-90 rounded-xl p-4 shadow-sm">
+            {meeting.questions.map((q, i) => (
+              <p key={i} className="text-xs mb-2 last:mb-0" style={{ color: palette.ink }}>• {q}</p>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 참여 버튼 */}
+      <div className="px-4 pb-4">
+        <button 
+          onClick={() => onNavigate('review')}
+          className="w-full py-3 rounded-2xl text-white font-semibold text-sm" 
+          style={{ backgroundColor: palette.midnight }}
+        >
+          모임 참여하기
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 리뷰 작성 화면
+function ReviewScreen({ onNavigate }) {
+  const [checkedItems, setCheckedItems] = useState({ recommend: true, improve: false, newTry: true });
+  const [comment, setComment] = useState('');
+  const [tags, setTags] = useState(['실존주의', '부조리']);
+
+  const toggleCheck = (item) => {
+    setCheckedItems(prev => ({ ...prev, [item]: !prev[item] }));
+  };
+
+  const handleSubmit = () => {
+    alert('리뷰가 제출되었습니다!');
+    onNavigate('home');
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col" style={{ background: `linear-gradient(to bottom, ${palette.paper}, ${palette.stardust})` }}>
+      {/* 헤더 */}
+      <div className="bg-white bg-opacity-90 px-4 py-3 flex items-center justify-between">
+        <button onClick={() => onNavigate('home')}>
+          <ChevronLeft size={20} />
+        </button>
+        <span className="font-serif font-semibold text-sm" style={{ color: palette.ink }}>정성 리뷰</span>
+        <div className="w-5"></div>
+      </div>
+
+      {/* 체크박스 섹션 */}
+      <div className="px-4 pt-4 pb-3 flex-1 overflow-y-auto">
+        <h3 className="font-serif font-semibold text-sm mb-3" style={{ color: palette.ink }}>어떤 점이 좋았나요?</h3>
+        
+        <div className="space-y-2 mb-4">
+          <label className="flex items-center cursor-pointer" onClick={() => toggleCheck('recommend')}>
+            <div className="w-5 h-5 rounded border flex items-center justify-center" style={{ borderColor: palette.grain, backgroundColor: checkedItems.recommend ? palette.midnight : 'white' }}>
+              {checkedItems.recommend && <Check size={14} style={{ color: 'white' }} />}
+            </div>
+            <span className="ml-2 text-xs" style={{ color: palette.ink }}>추천</span>
+          </label>
+
+          <label className="flex items-center cursor-pointer" onClick={() => toggleCheck('improve')}>
+            <div className="w-5 h-5 rounded bg-white border flex items-center justify-center" style={{ borderColor: palette.grain, backgroundColor: checkedItems.improve ? palette.midnight : 'white' }}>
+              {checkedItems.improve && <Check size={14} style={{ color: 'white' }} />}
+            </div>
+            <span className="ml-2 text-xs" style={{ color: palette.ink }}>보완</span>
+          </label>
+
+          <label className="flex items-center cursor-pointer" onClick={() => toggleCheck('newTry')}>
+            <div className="w-5 h-5 rounded border flex items-center justify-center" style={{ borderColor: palette.grain, backgroundColor: checkedItems.newTry ? palette.midnight : 'white' }}>
+              {checkedItems.newTry && <Check size={14} style={{ color: 'white' }} />}
+            </div>
+            <span className="ml-2 text-xs" style={{ color: palette.ink }}>새로운 시도</span>
+          </label>
+        </div>
+
+        <h3 className="font-serif font-semibold text-sm mb-2" style={{ color: palette.ink }}>코멘트</h3>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="토론 과정에서 인상 깊었던 점을 자유롭게 적어주세요..."
+          className="w-full bg-white bg-opacity-95 rounded-2xl p-4 h-32 text-xs resize-none focus:outline-none focus:ring-2"
+          style={{ 
+            color: palette.ink,
+            borderColor: palette.grain,
+            '--tw-ring-color': palette.midnight
+          }}
+        />
+
+        <h3 className="font-serif font-semibold text-sm mb-2 mt-4" style={{ color: palette.ink }}>태그</h3>
+        <div className="flex gap-2 flex-wrap">
+          {tags.map((tag, i) => (
+            <span key={i} className="px-3 py-1.5 rounded-full text-xs" style={{ backgroundColor: palette.grain, color: palette.ink }}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* 제출 버튼 */}
+      <div className="px-4 pb-4">
+        <button 
+          onClick={handleSubmit}
+          className="w-full py-3 rounded-2xl text-white font-semibold text-sm" 
+          style={{ backgroundColor: palette.midnight }}
+        >
+          리뷰 제출하기
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 명예 회원 화면
+function HonorScreen({ onNavigate, members }) {
+  return (
+    <div className="w-full h-full flex flex-col" style={{ background: `linear-gradient(to bottom, ${palette.paper}, ${palette.stardust})` }}>
+      {/* 헤더 */}
+      <div className="bg-white bg-opacity-90 px-4 py-3 flex items-center justify-between">
+        <button onClick={() => onNavigate('home')}>
+          <ChevronLeft size={20} />
+        </button>
+        <span className="font-serif font-semibold text-sm" style={{ color: palette.ink }}>명예 회원</span>
+        <div className="w-5"></div>
+      </div>
+
+      {/* 소개 */}
+      <div className="px-4 pt-4 pb-3 flex-1 overflow-y-auto">
+        <p className="text-xs mb-4" style={{ color: palette.ink, opacity: 0.8 }}>
+          정성스레 참여하고 서로를 북돋운 분들께 배지를 드립니다.
+        </p>
+
+        {/* 배지 그리드 */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {members.map(member => (
+            <div key={member.num} className="rounded-2xl p-4 text-center cursor-pointer hover:shadow-md transition-shadow" style={{ backgroundColor: palette.stardust }}>
+              <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center relative" style={{ backgroundColor: palette.midnight, opacity: 0.1 }}>
+              </div>
+              <div className="text-lg font-serif font-semibold mb-1" style={{ color: palette.midnight }}>{member.num}호</div>
+              <div className="text-xs font-semibold mb-1" style={{ color: palette.ink }}>{member.name}</div>
+              <div className="text-xs" style={{ color: palette.ink, opacity: 0.7 }}>함께한 {member.count}회</div>
+            </div>
+          ))}
+        </div>
+
+        {/* 온기 지표 */}
+        <h3 className="font-serif font-semibold text-sm mb-2" style={{ color: palette.ink }}>온기 지표</h3>
+        <div className="bg-white bg-opacity-95 rounded-2xl p-4">
+          <div className="flex justify-between mb-3">
+            <div>
+              <p className="text-xs mb-1" style={{ color: palette.ink, opacity: 0.7 }}>되쓰기 비율</p>
+              <p className="text-xl font-serif font-semibold" style={{ color: palette.midnight }}>87%</p>
+            </div>
+            <div>
+              <p className="text-xs mb-1" style={{ color: palette.ink, opacity: 0.7 }}>감사 배지</p>
+              <p className="text-xl font-serif font-semibold" style={{ color: palette.midnight }}>23개</p>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs mb-1" style={{ color: palette.ink, opacity: 0.7 }}>평균 참여 시간</p>
+            <p className="text-xl font-serif font-semibold" style={{ color: palette.midnight }}>2.5시간</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 메인 앱
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState('home');
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+
+  const navigate = (screen, data = null) => {
+    setCurrentScreen(screen);
+    if (data) setSelectedMeeting(data);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: palette.paper }}>
+      <div 
+        className="w-full rounded-3xl shadow-2xl overflow-hidden"
+        style={{ 
+          maxWidth: '375px',
+          height: '667px',
+          backgroundColor: palette.midnight,
+          padding: '8px'
+        }}
+      >
+        <div className="w-full h-full rounded-3xl overflow-hidden">
+          {currentScreen === 'home' && (
+            <HomeScreen onNavigate={navigate} meetings={seedMeetings} />
+          )}
+          {currentScreen === 'detail' && selectedMeeting && (
+            <MeetingDetailScreen onNavigate={navigate} meeting={selectedMeeting} />
+          )}
+          {currentScreen === 'review' && (
+            <ReviewScreen onNavigate={navigate} />
+          )}
+          {currentScreen === 'honor' && (
+            <HonorScreen onNavigate={navigate} members={seedHonorMembers} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

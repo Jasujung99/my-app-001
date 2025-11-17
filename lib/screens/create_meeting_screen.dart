@@ -20,7 +20,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
   final _locationController = TextEditingController();
   final _firestoreService = FirestoreService(); // 서비스 인스턴스
 
-  final double _maxMembers = 8;
+  double _maxMembers = 8;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   bool _isLoading = false;
@@ -33,8 +33,30 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
     super.dispose();
   }
 
-  Future<void> _pickDate() async { /* ... */ }
-  Future<void> _pickTime() async { /* ... */ }
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+    );
+
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
+  }
 
   // 모임 생성 로직 구현
   Future<void> _submitMeeting() async {
@@ -98,6 +120,97 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... 기존 UI 코드 ...
+    final theme = Theme.of(context);
+    final dateLabel = _selectedDate == null
+        ? '날짜 선택'
+        : '${_selectedDate!.year}.${_selectedDate!.month.toString().padLeft(2, '0')}.${_selectedDate!.day.toString().padLeft(2, '0')}';
+    final timeLabel = _selectedTime == null
+        ? '시간 선택'
+        : _selectedTime!.format(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('모임 만들기')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: '모임 제목',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => (value == null || value.isEmpty) ? '모임 제목을 입력해주세요.' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: '모임 소개',
+                  border: OutlineInputBorder(),
+                ),
+                minLines: 4,
+                maxLines: 6,
+                validator: (value) => (value == null || value.isEmpty) ? '소개 내용을 입력해주세요.' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: '진행 장소 (온라인/오프라인)',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => (value == null || value.isEmpty) ? '장소를 입력해주세요.' : null,
+              ),
+              const SizedBox(height: 24),
+              Text('일정', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickDate,
+                      icon: const Icon(Icons.calendar_month),
+                      label: Text(dateLabel),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickTime,
+                      icon: const Icon(Icons.access_time),
+                      label: Text(timeLabel),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text('최대 인원 (${_maxMembers.toInt()}명)', style: theme.textTheme.titleMedium),
+              Slider(
+                min: 4,
+                max: 20,
+                divisions: 16,
+                value: _maxMembers,
+                label: _maxMembers.toInt().toString(),
+                onChanged: (value) => setState(() => _maxMembers = value),
+              ),
+              const SizedBox(height: 24),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submitMeeting,
+                        child: const Text('모임 생성하기'),
+                      ),
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

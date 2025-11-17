@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:myapp/models/book_request.dart';
 import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/services/firestore_service.dart';
+import 'package:myapp/widgets/content_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String userId;
@@ -27,22 +28,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // BR 상세 페이지로 이동하는 로직 (HomeScreen과 동일)
-  Future<void> _navigateToDetail(BookRequest br) async {
+  void _navigateToDetail(BookRequest br) {
     final authService = context.read<AuthService>();
     final user = authService.currentUser;
-    if (user == null) return;
 
-    final success = await _firestoreService.spendPointsToReadBR(user.uid, br);
-
-    if (mounted) {
-      if (success) {
-        context.go('/br/${br.id}');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('포인트가 부족하여 열람할 수 없습니다.')),
-        );
-      }
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다.')),
+      );
+      return;
     }
+
+    context.go('/br/${br.id}');
   }
 
   @override
