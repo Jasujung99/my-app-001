@@ -1,4 +1,4 @@
-# Blueprint: 북토크 시티 (BookTalk City)
+# Blueprint: 북토크 시티 (BookTalk City) - 최종 MVP
 
 ## 1. 🎯 프로젝트 방향성: 책으로 시작하는 지역 공론장
 
@@ -6,51 +6,63 @@
 
 ## 2. 📊 핵심 컨셉
 
-*   **당근 스타일 모임 기능:** 동네 기반의 쉽고 빠른 독서 모임 생성 및 참여. (단, 모임 개설은 특정 조건을 만족하는 사용자만 가능)
+*   **당근 스타일 모임 기능:** 동네 기반의 쉽고 빠른 독서 모임 생성 및 참여.
 *   **GitHub PR 스타일 토론:** "독서 노트(Book Request)"를 통한 깊이 있고 구조화된 토론.
-*   **Create-to-Earn (C2E) 수익 모델:** 활동(서평, 발제 등)을 통해 포인트를 획득하고 사용하는 지속가능한 경제 시스템.
-*   **차등적 콘텐츠 가치:** 사용자의 등급과 기여도에 따라 콘텐츠(BR)의 가치가 달라지며, 열람에 필요한 포인트가 차등적으로 적용됩니다.
+*   **Create-to-Earn (C2E) 수익 모델:** 활동을 통해 포인트를 획득하고 사용하는 지속가능한 경제 시스템.
 
 ## 3. 🏗️ MVP 기능 설계
 
-### **Phase 1: 핵심 기능**
+### **Phase 1: 핵심 기능 (완료)**
+*   앱 기본 구조, 테마, 사용자 인증, 홈 화면, Book Request(BR) 시스템 구현 완료.
 
-1.  **동네 독서 모임 생성/참여:**
-    *   위치 기반 모임 생성 및 목록
-    *   모임 가입 시 채팅방 자동 참여
-    *   모임 일정 관리
-2.  **Book Request (BR) - 독서노트 시스템:**
-    *   정해진 템플릿에 따라 독서 노트(요약, 인용, 생각, 질문) 작성
-    *   BR 작성 시 기본 포인트 획득
-3.  **온/오프라인 하이브리드 모임 지원:**
-    *   모임 유형(온라인, 오프라인, 하이브리드) 설정
-    *   모임별 발제 자료(BR) 및 토론 주제 연결
+### **Phase 2: 토론 고도화 (완료)**
+*   BR 상세 페이지, 댓글(Reply) 기능, 사용자 프로필 기능 구현 완료.
 
-### **Phase 2: 토론 고도화**
+### **Phase 3: 수익 모델 및 확장 (완료)**
 
-4.  **구조화된 토론 시스템:** 책의 핵심 주제에 대한 찬/반 토론 등 다양한 토론 포맷 도입.
-5.  **AI 어시스턴트:** BR 요약, 사실 확인, 토론 질문 제안, 토론 중재 등 AI 기능 도입.
+*   **C2E (Create-to-Earn) 포인트 시스템 도입 (완료)**
+    *   데이터 모델링, 포인트 지급/차감 로직(트랜잭션), UI 통합 완료.
 
-### **Phase 3: 수익 모델 및 확장**
+*   **독서 모임 생성/참여 기능 (1단계 완료)**
+    *   **데이터 모델:** `Meeting` 클래스를 `lib/models/meeting.dart`에 정의했습니다.
+    *   **모임 생성 화면:** `CreateMeetingScreen`을 구현하여 사용자가 모임의 제목, 소개, 장소, 시간, 최대 인원 등을 설정할 수 있도록 했습니다.
+    *   **서비스 로직:** `FirestoreService`에 `createMeeting` 메소드를 추가하여, 주최자를 자동으로 참여자에 포함시키는 새로운 모임을 생성하는 로직을 구현했습니다.
+    *   **UI/라우팅 통합:** `go_router`에 `/create-meeting` 경로를 추가하고, `HomeScreen`의 `FloatingActionButton` 시스템을 개편하여 BR 작성과 모임 생성을 분리했습니다.
 
-6.  **포인트 경제 시스템:** 활동을 통한 포인트 획득 및 프리미엄 콘텐츠 열람, 이벤트 참여 등에 사용.
-7.  **사용자 등급 시스템:** 기여도에 따라 사용자 등급을 부여하고, BR의 가치를 차등 적용.
+### **향후 확장 계획**
+
+*   **모임 상세/참여:** `MeetingDetailScreen`을 만들어 모임 참여/탈퇴, 참여자 목록 확인 기능을 구현합니다.
+*   **실시간 채팅:** 각 모임별로 실시간 채팅방을 제공합니다.
+*   **AI 어시스턴트:** BR 요약, 토론 주제 제안 등 AI 기능을 도입합니다.
+*   **고급 검색/필터링:** 지역, 책, 모임 유형별로 검색하는 기능을 추가합니다.
 
 ## 4. 💻 기술 스택
 
 *   **Cross-Platform Framework:** Flutter
-*   **Backend & DB:** Firebase (Authentication, Firestore, Functions, Storage)
-*   **AI Integration:** Firebase AI SDK (Vertex AI - Gemini)
+*   **Backend & DB:** Firebase (Authentication, Firestore)
 *   **State Management:** Provider
 *   **Routing:** go_router
-*   **UI/Styling:** Material 3, google_fonts
+*   **UI/Styling:** Material 3, google_fonts, intl
 
-## 5. 🎨 UI/UX 핵심 원칙
+## 5. 📂 최종 프로젝트 구조
 
-*   **모바일 퍼스트 & 원클릭 UX:** 모든 핵심 기능은 3단계 이내에 완료되도록 설계합니다.
-*   **직관적인 화면 구성:** 홈(모임/BR 피드), 모임 상세, BR 작성, 내 서재(마이페이지) 중심으로 구성합니다.
-
-## 6. 🚀 런칭 전략
-
-*   **MVP 목표:** 서울 3개 구 파일럿 런칭, 월 100개 모임 및 1,000 MAU 달성.
-*   **차별화:** 독서 특화(vs 당근), 오프라인/지역 기반(vs 밀리의서재), 무료 시작 및 자율 운영(vs 트레바리).
+```
+lib/
+├── main.dart, router.dart, firebase_options.dart
+|
+├── models/
+│   ├── book_request.dart, reply.dart, user_model.dart, meeting.dart
+|
+├── providers/
+│   └── theme_provider.dart
+|
+├── services/
+│   ├── auth_service.dart, firestore_service.dart
+|
+├── screens/
+│   ├── home_screen.dart, login_screen.dart, create_br_screen.dart,
+│   │   br_detail_screen.dart, profile_screen.dart, create_meeting_screen.dart
+|
+└── widgets/
+    └── content_card.dart
+```

@@ -1,0 +1,76 @@
+// lib/theme/app_theme.dart
+
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+// 참조 UI의 색상 팔레트
+class AppColors {
+  static const Color paper = Color(0xFFFAF8F1);
+  static const Color midnight = Color(0xFF2F3E4B);
+  static const Color grain = Color(0xFFE8DEC7);
+  static const Color ink = Color(0xFF222426);
+  static const Color stardust = Color(0xFFF4EFE3);
+  static const Color accent = Color(0xFF8A97A6);
+}
+
+class AppTheme {
+  // 새로운 텍스트 테마 정의 (세리프 폰트 강조)
+  static final TextTheme _appTextTheme = TextTheme(
+    displayLarge: GoogleFonts.lora(fontSize: 57, fontWeight: FontWeight.bold, color: AppColors.ink),
+    headlineSmall: GoogleFonts.lora(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.ink),
+    titleLarge: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.ink),
+    titleMedium: GoogleFonts.lora(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.ink),
+    bodyLarge: GoogleFonts.notoSansKr(fontSize: 16, color: AppColors.ink, height: 1.6),
+    bodyMedium: GoogleFonts.notoSansKr(fontSize: 14, color: AppColors.ink),
+    bodySmall: GoogleFonts.notoSansKr(fontSize: 12, color: AppColors.accent),
+    labelLarge: GoogleFonts.notoSansKr(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+  );
+
+  static final ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
+    scaffoldBackgroundColor: AppColors.paper, // 기본 배경색
+    colorScheme: const ColorScheme.light(
+      primary: AppColors.midnight,
+      secondary: AppColors.accent,
+      surface: AppColors.paper,
+      onSurface: AppColors.ink, // 그라데이션 끝 색상
+    ),
+    textTheme: _appTextTheme,
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white.withOpacity(0.9),
+      elevation: 0,
+      centerTitle: false,
+      iconTheme: const IconThemeData(color: AppColors.ink),
+      titleTextStyle: _appTextTheme.titleMedium,
+    ),
+    // 카드 테마
+    cardTheme: CardThemeData(
+      elevation: 1,
+      color: Colors.white.withOpacity(0.9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+    ),
+    // 버튼 테마
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.midnight,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        textStyle: _appTextTheme.labelLarge,
+      ),
+    ),
+    // 하단 탭 바 테마
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: Colors.white.withOpacity(0.95),
+      selectedItemColor: AppColors.midnight,
+      unselectedItemColor: AppColors.accent,
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
+      type: BottomNavigationBarType.fixed,
+    ),
+  );
+
+  // 다크 테마는 우선 라이트 테마와 동일하게 설정 (추후 디자인 확장 가능)
+  static final ThemeData darkTheme = lightTheme;
+}

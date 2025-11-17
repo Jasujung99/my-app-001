@@ -1,87 +1,60 @@
-import 'dart:convert';
-import 'package:myapp/models/book_request.dart';
+// lib/models/meeting.dart
 
-Meeting meetingFromJson(String str) => Meeting.fromJson(json.decode(str));
-
-String meetingToJson(Meeting data) => json.encode(data.toJson());
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Meeting {
-    final String id;
-    final String type;
-    final DateTime date;
-    final String? location;
-    final String? zoomLink;
-    final Agenda agenda;
-    final List<Participant> participants;
+  final String id;
+  final String title;
+  final String description;
+  final String location;
+  final String hostId;
+  final String hostName;
+  final List<String> memberIds; // 참여자들의 uid 리스트
+  final int maxMembers;
+  final Timestamp meetingTime;
+  final Timestamp createdAt;
 
-    Meeting({
-        required this.id,
-        required this.type,
-        required this.date,
-        this.location,
-        this.zoomLink,
-        required this.agenda,
-        required this.participants,
-    });
+  Meeting({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.location,
+    required this.hostId,
+    required this.hostName,
+    required this.memberIds,
+    required this.maxMembers,
+    required this.meetingTime,
+    required this.createdAt,
+  });
 
-    factory Meeting.fromJson(Map<String, dynamic> json) => Meeting(
-        id: json["id"],
-        type: json["type"],
-        date: DateTime.parse(json["date"]),
-        location: json["location"],
-        zoomLink: json["zoomLink"],
-        agenda: Agenda.fromJson(json["agenda"]),
-        participants: List<Participant>.from(json["participants"].map((x) => Participant.fromJson(x))),
+  factory Meeting.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return Meeting(
+      id: doc.id,
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      location: data['location'] ?? '',
+      hostId: data['hostId'] ?? '',
+      hostName: data['hostName'] ?? '',
+      // Firestore의 Array는 List<dynamic>으로 넘어오므로 List<String>으로 변환
+      memberIds: List<String>.from(data['memberIds'] ?? []),
+      maxMembers: data['maxMembers'] ?? 0,
+      meetingTime: data['meetingTime'] as Timestamp,
+      createdAt: data['createdAt'] as Timestamp,
     );
+  }
 
-    Map<String, dynamic> toJson() => {
-        "id": id,
-        "type": type,
-        "date": date.toIso8601String(),
-        "location": location,
-        "zoomLink": zoomLink,
-        "agenda": agenda.toJson(),
-        "participants": List<dynamic>.from(participants.map((x) => x.toJson())),
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'description': description,
+      'location': location,
+      'hostId': hostId,
+      'hostName': hostName,
+      'memberIds': memberIds,
+      'maxMembers': maxMembers,
+      'meetingTime': meetingTime,
+      'createdAt': createdAt,
     };
-}
-
-class Agenda {
-    final List<BookRequest> bookRequests;
-    final List<String> discussionTopics;
-
-    Agenda({
-        required this.bookRequests,
-        required this.discussionTopics,
-    });
-
-    factory Agenda.fromJson(Map<String, dynamic> json) => Agenda(
-        bookRequests: List<BookRequest>.from(json["bookRequests"].map((x) => BookRequest.fromJson(x))),
-        discussionTopics: List<String>.from(json["discussionTopics"].map((x) => x)),
-    );
-
-    Map<String, dynamic> toJson() => {
-        "bookRequests": List<dynamic>.from(bookRequests.map((x) => x.toJson())),
-        "discussionTopics": List<dynamic>.from(discussionTopics.map((x) => x)),
-    };
-}
-
-
-class Participant {
-    final String userId;
-    final String status; // e.g., 'attending', 'absent'
-
-    Participant({
-        required this.userId,
-        required this.status,
-    });
-
-    factory Participant.fromJson(Map<String, dynamic> json) => Participant(
-        userId: json["userId"],
-        status: json["status"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "userId": userId,
-        "status": status,
-    };
+  }
 }
