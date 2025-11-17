@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:myapp/models/book_request.dart';
 import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/services/firestore_service.dart';
+import 'package:myapp/theme/app_theme.dart';
+import 'package:myapp/widgets/status_pill.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -79,11 +81,14 @@ class _CreateBRScreenState extends State<CreateBRScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Book Request 작성')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: '제목', border: OutlineInputBorder()),
@@ -131,7 +136,9 @@ class _CreateBRScreenState extends State<CreateBRScreen> {
                     ),
                     child: const Text('등록하기'),
                   ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

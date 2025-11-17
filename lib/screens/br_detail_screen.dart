@@ -7,6 +7,8 @@ import 'package:myapp/models/book_request.dart';
 import 'package:myapp/models/reply.dart';
 import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/services/firestore_service.dart';
+import 'package:myapp/theme/app_theme.dart';
+import 'package:myapp/widgets/status_pill.dart';
 import 'package:intl/intl.dart';
 
 class BRDetailScreen extends StatefulWidget {
@@ -80,9 +82,12 @@ class _BRDetailScreenState extends State<BRDetailScreen> {
       body: Column(
         children: [
           Expanded(
-            child: FutureBuilder<BookRequest?>(
-              future: _brFuture,
-              builder: (context, snapshot) {
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: FutureBuilder<BookRequest?>(
+                  future: _brFuture,
+                  builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -121,6 +126,8 @@ class _BRDetailScreenState extends State<BRDetailScreen> {
                   ],
                 );
               },
+            ),
+              ),
             ),
           ),
           _buildReplyInput(),

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:myapp/models/book_request.dart';
 import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/services/firestore_service.dart';
+import 'package:myapp/theme/app_theme.dart';
 import 'package:myapp/widgets/content_card.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -71,9 +72,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<BookRequest>>(
-        future: _userBRsFuture,
-        builder: (context, snapshot) {
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: FutureBuilder<List<BookRequest>>(
+            future: _userBRsFuture,
+            builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -88,25 +92,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final authorName = userBRs.first.authorName;
 
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
             children: [
+              // Type Hierarchy micro-label
+              Text(
+                'PROFILE',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accent,
+                ),
+              ),
+              const SizedBox(height: 12),
               // ... 사용자 정보 섹션 ...
-              Row(
-                children: [
-                  const CircleAvatar(radius: 30, child: Icon(Icons.person, size: 30)),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
                     children: [
-                      Text(authorName, style: theme.textTheme.headlineSmall),
-                      Text('작성한 Book Request: ${userBRs.length}개', style: theme.textTheme.bodyMedium),
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundColor: AppColors.midnight,
+                        child: const Icon(Icons.person, size: 32, color: Colors.white),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(authorName, style: theme.textTheme.titleLarge?.copyWith(height: 1.2)),
+                          const SizedBox(height: 4),
+                          Text('작성한 Book Request: ${userBRs.length}개', style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.accent)),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-              const Divider(height: 48),
+              const SizedBox(height: 32),
 
-              Text('작성한 Book Request 목록', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'MY BOOK REQUESTS',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.accent,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('작성한 목록', style: theme.textTheme.titleMedium?.copyWith(height: 1.2)),
               const SizedBox(height: 16),
               ListView.builder(
                 shrinkWrap: true,
@@ -124,6 +159,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           );
         },
+      ),
+        ),
       ),
     );
   }

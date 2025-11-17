@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_places_flutter/google_places_flutter.dart';
+import 'package:google_places_flutter/model/prediction.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/models/meeting.dart';
 import 'package:myapp/services/auth_service.dart';
@@ -20,11 +22,14 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationNoteController = TextEditingController();
-  final _placeNameController = TextEditingController();
-  final _placeAddressController = TextEditingController();
-  final _latitudeController = TextEditingController();
-  final _longitudeController = TextEditingController();
-  final _firestoreService = FirestoreService(); // 서비스 인스턴스
+  final _placeSearchController = TextEditingController();
+  final _firestoreService = FirestoreService();
+
+  String? _selectedPlaceId;
+  String? _selectedPlaceName;
+  String? _selectedPlaceAddress;
+  double? _selectedLat;
+  double? _selectedLng;
 
   double _maxMembers = 8;
   DateTime? _selectedDate;
@@ -33,15 +38,14 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
   bool _hasFacilitatorCard = true;
   bool _isLoading = false;
 
+  static const String _placesApiKey = String.fromEnvironment('PLACES_API_KEY');
+
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
     _locationNoteController.dispose();
-    _placeNameController.dispose();
-    _placeAddressController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
+    _placeSearchController.dispose();
     super.dispose();
   }
 
@@ -53,10 +57,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
     );
-
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
   Future<void> _pickTime() async {
@@ -64,13 +65,9 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
       context: context,
       initialTime: _selectedTime ?? TimeOfDay.now(),
     );
-
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
-    }
+    if (picked != null) setState(() => _selectedTime = picked);
   }
 
-  // 모임 생성 로직 구현
   Future<void> _submitMeeting() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -81,9 +78,9 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
       return;
     }
 
-    if (_locationType == MeetingLocationType.offline && _placeNameController.text.trim().isEmpty) {
+    if (_locationType == MeetingLocationType.offline && _selectedPlaceId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('오프라인 모임은 장소 이름을 입력해야 합니다.')),
+        const SnackBar(content: Text('오프라인 모임은 장소를 검색해 선택해주세요.')),
       );
       return;
     }
@@ -109,20 +106,17 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
       );
 
       final organizerDisplayName = user.displayName ?? user.email!;
-      double? _parseCoordinate(String value) {
-        if (value.trim().isEmpty) return null;
-        return double.tryParse(value.trim());
-      }
 
       await _firestoreService.createMeeting(
         title: _titleController.text,
         description: _descriptionController.text,
         location: _locationNoteController.text,
         locationType: _locationType,
-        placeName: _placeNameController.text.trim().isEmpty ? null : _placeNameController.text.trim(),
-        placeAddress: _placeAddressController.text.trim().isEmpty ? null : _placeAddressController.text.trim(),
-        latitude: _parseCoordinate(_latitudeController.text),
-        longitude: _parseCoordinate(_longitudeController.text),
+        placeId: _selectedPlaceId,
+        placeName: _selectedPlaceName,
+        placeAddress: _selectedPlaceAddress,
+        latitude: _selectedLat,
+        longitude: _selectedLng,
         hostId: user.uid,
         hostName: organizerDisplayName,
         assignedOrganizerId: user.uid,
@@ -134,7 +128,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('새로운 모임이 생성되었습니다!')),
+          const SnackBar(content: Text('새 모임이 생성되었어요.')),
         );
         context.pop();
       }
@@ -145,10 +139,73 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Widget _buildPlaceAutocomplete() {
+    if (_placesApiKey.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('장소 검색', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text('PLACES_API_KEY가 설정되지 않았어요. --dart-define=PLACES_API_KEY=... 로 설정해주세요.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.red)),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GooglePlaceAutoCompleteTextField(
+          textEditingController: _placeSearchController,
+          googleAPIKey: _placesApiKey,
+          inputDecoration: const InputDecoration(
+            labelText: '장소 검색',
+            border: OutlineInputBorder(),
+            hintText: '예) 서울시 강남구 카페',
+          ),
+          debounceTime: 400,
+          countries: const ['kr'],
+          isLatLngRequired: true,
+          getPlaceDetailWithLatLng: (Prediction prediction) {
+            _selectedPlaceId = prediction.placeId;
+            _selectedPlaceName = prediction.description;
+            _selectedPlaceAddress = prediction.structuredFormatting?.secondaryText ?? prediction.description;
+            if (prediction.lat != null && prediction.lng != null) {
+              _selectedLat = double.tryParse(prediction.lat!);
+              _selectedLng = double.tryParse(prediction.lng!);
+            }
+            setState(() {});
+          },
+          itemClick: (Prediction prediction) {
+            _placeSearchController.text = prediction.description ?? '';
+          },
+          itmClick: (Prediction prediction) {}, // legacy prop (no-op)
+        ),
+        const SizedBox(height: 12),
+        if (_selectedPlaceName != null || _selectedPlaceAddress != null)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_selectedPlaceName != null)
+                Text(_selectedPlaceName!, style: Theme.of(context).textTheme.titleSmall),
+              if (_selectedPlaceAddress != null)
+                Text(_selectedPlaceAddress!, style: Theme.of(context).textTheme.bodySmall),
+              if (_selectedLat != null && _selectedLng != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    '위도 ${_selectedLat!.toStringAsFixed(5)}, 경도 ${_selectedLng!.toStringAsFixed(5)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
   }
 
   @override
@@ -157,9 +214,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
     final dateLabel = _selectedDate == null
         ? '날짜 선택'
         : '${_selectedDate!.year}.${_selectedDate!.month.toString().padLeft(2, '0')}.${_selectedDate!.day.toString().padLeft(2, '0')}';
-    final timeLabel = _selectedTime == null
-        ? '시간 선택'
-        : _selectedTime!.format(context);
+    final timeLabel = _selectedTime == null ? '시간 선택' : _selectedTime!.format(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('모임 만들기')),
@@ -192,93 +247,25 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
               const SizedBox(height: 16),
               Text('진행 방식', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.grain.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: SegmentedButton<MeetingLocationType>(
-                  segments: const [
-                    ButtonSegment(
-                      value: MeetingLocationType.offline,
-                      label: Text('오프라인'),
-                      icon: Icon(Icons.storefront),
-                    ),
-                    ButtonSegment(
-                      value: MeetingLocationType.online,
-                      label: Text('온라인'),
-                      icon: Icon(Icons.videocam),
-                    ),
-                  ],
-                  selected: {_locationType},
-                  onSelectionChanged: (selection) {
-                    setState(() => _locationType = selection.first);
-                  },
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return AppColors.midnight;
-                      }
-                      return Colors.transparent;
-                    }),
-                    foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return Colors.white;
-                      }
-                      return AppColors.ink;
-                    }),
-                  ),
-                ),
+              SegmentedButton<MeetingLocationType>(
+                segments: const [
+                  ButtonSegment(value: MeetingLocationType.offline, label: Text('오프라인'), icon: Icon(Icons.storefront)),
+                  ButtonSegment(value: MeetingLocationType.online, label: Text('온라인'), icon: Icon(Icons.videocam)),
+                ],
+                selected: {_locationType},
+                onSelectionChanged: (selection) {
+                  setState(() => _locationType = selection.first);
+                },
               ),
               const SizedBox(height: 16),
               if (_locationType == MeetingLocationType.offline) ...[
-                TextFormField(
-                  controller: _placeNameController,
-                  decoration: const InputDecoration(
-                    labelText: '장소 이름 (예: 연희문학살롱)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _placeAddressController,
-                  decoration: const InputDecoration(
-                    labelText: '주소 또는 상세 위치',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _latitudeController,
-                        decoration: const InputDecoration(
-                          labelText: '위도 (lat)',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _longitudeController,
-                        decoration: const InputDecoration(
-                          labelText: '경도 (lng)',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                      ),
-                    ),
-                  ],
-                ),
+                _buildPlaceAutocomplete(),
                 const SizedBox(height: 16),
               ],
               TextFormField(
                 controller: _locationNoteController,
                 decoration: InputDecoration(
-                  labelText: _locationType == MeetingLocationType.online ? '링크/접속 가이드' : '추가 안내 (층수, 비밀번호 등)',
+                  labelText: _locationType == MeetingLocationType.online ? '링크/접속 가이드' : '추가 안내 (층수, 비번 등)',
                   border: const OutlineInputBorder(),
                 ),
                 validator: (value) => (value == null || value.isEmpty) ? '장소 안내를 입력해주세요.' : null,
@@ -316,19 +303,11 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
                 onChanged: (value) => setState(() => _maxMembers = value),
               ),
               const SizedBox(height: 16),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.grain.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: SwitchListTile(
-                  value: _hasFacilitatorCard,
-                  onChanged: (value) => setState(() => _hasFacilitatorCard = value),
-                  title: Text('진행 카드/큐카드 준비됨', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
-                  subtitle: Text('토론 가이드를 준비한 관리자 카드 여부', style: theme.textTheme.bodySmall),
-                  activeColor: AppColors.midnight,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
+              SwitchListTile(
+                value: _hasFacilitatorCard,
+                onChanged: (value) => setState(() => _hasFacilitatorCard = value),
+                title: const Text('진행 카드/북카드 준비됨'),
+                subtitle: const Text('토론 가이드를 준비한 관리자 카드 여부'),
               ),
               const SizedBox(height: 24),
               _isLoading

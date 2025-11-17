@@ -5,12 +5,19 @@ import 'package:google_fonts/google_fonts.dart';
 
 // 참조 UI의 색상 팔레트
 class AppColors {
+  // Base Colors
   static const Color paper = Color(0xFFFAF8F1);
   static const Color midnight = Color(0xFF2F3E4B);
   static const Color grain = Color(0xFFE8DEC7);
   static const Color ink = Color(0xFF222426);
   static const Color stardust = Color(0xFFF4EFE3);
-  static const Color accent = Color(0xFF8A97A6);
+  
+  // Accent & Point Colors
+  static const Color accent = Color(0xFF6B8CAE); // 생동감 있는 블루
+  static const Color primary = Color(0xFFC97C5D); // 산호 톤 - CTA/포인트용
+  static const Color terracotta = Color(0xFFD97757); // 따뜻한 테라코타 - 모임 참여
+  static const Color success = Color(0xFF7BA05B); // 올리브 그린 - 진행중 상태
+  static const Color alert = Color(0xFFE8A05D); // 따뜻한 오렌지 - 임박/모집중
 }
 
 class AppTheme {

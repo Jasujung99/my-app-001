@@ -9,6 +9,8 @@ import 'package:myapp/services/auth_service.dart';
 import 'package:myapp/services/firestore_service.dart';
 import 'package:myapp/theme/app_theme.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:myapp/widgets/status_pill.dart';
 
 class MeetingDetailScreen extends StatefulWidget {
   const MeetingDetailScreen({super.key, required this.meetingId});
@@ -46,17 +48,6 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     if (now.isAfter(meetingDate)) return '종료';
     if (meetingDate.difference(now).inHours <= 2) return '임박';
     return '예정';
-  }
-
-  Color _meetingStatusColor(Meeting meeting) {
-    switch (_meetingStatusLabel(meeting)) {
-      case '종료':
-        return Colors.grey.shade400;
-      case '임박':
-        return AppColors.accent;
-      default:
-        return AppColors.grain;
-    }
   }
 
   String _locationTypeLabel(MeetingLocationType type) {
@@ -98,6 +89,40 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     );
   }
 
+  Future<void> _openMap(Meeting meeting) async {
+    final lat = meeting.latitude;
+    final lng = meeting.longitude;
+    final hasCoordinates = lat != null && lng != null;
+
+    Uri? uri;
+    if (hasCoordinates) {
+      uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${lat.toStringAsFixed(6)},${lng.toStringAsFixed(6)}'
+        '${meeting.placeId != null ? '&query_place_id=${meeting.placeId}' : ''}',
+      );
+    } else if (meeting.placeAddress != null) {
+      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(meeting.placeAddress!)}');
+    } else if (meeting.placeName != null) {
+      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(meeting.placeName!)}');
+    }
+
+    if (uri == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('열 수 있는 위치 정보가 없습니다.')),
+        );
+      }
+      return;
+    }
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('지도를 열지 못했습니다.')),
+      );
+    }
+  }
+
   Widget _buildMapPreview(Meeting meeting, TextTheme textTheme) {
     final lat = meeting.latitude;
     final lng = meeting.longitude;
@@ -121,7 +146,7 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
       decoration: decoration,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: hasCoordinates ? () {} : null,
+        onTap: () => _openMap(meeting),
         child: Center(
           child: hasCoordinates
               ? Column(
@@ -159,7 +184,6 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     TextTheme textTheme,
   ) {
     final statusLabel = _meetingStatusLabel(meeting);
-    final statusColor = _meetingStatusColor(meeting);
     final remainingSeats = (meeting.maxMembers - participants).clamp(0, meeting.maxMembers);
     final isFull = remainingSeats == 0;
     final isNearFull = !isFull && _participantRatio(participants, meeting.maxMembers) >= 0.7;
@@ -222,28 +246,13 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.16),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: statusColor.withOpacity(0.4)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      statusLabel == '종료' ? Icons.event_busy : Icons.timelapse,
-                      size: 14,
-                      color: statusColor,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      statusLabel,
-                      style: textTheme.bodySmall?.copyWith(color: Colors.white),
-                    ),
-                  ],
-                ),
+              StatusPill(
+                label: statusLabel,
+                type: statusLabel == '종료' 
+                  ? PillType.inactive 
+                  : statusLabel == '임박'
+                    ? PillType.alert
+                    : PillType.primary,
               ),
             ],
           ),
@@ -343,12 +352,19 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.grain.withOpacity(0.6),
+                    color: isFull ? AppColors.grain.withOpacity(0.6) : AppColors.success.withOpacity(0.15),
+                    border: Border.all(
+                      color: isFull ? AppColors.grain : AppColors.success,
+                      width: 1,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     isFull ? '모집 마감' : '$remainingSeats명 남음',
-                    style: textTheme.bodySmall?.copyWith(color: AppColors.midnight),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: isFull ? AppColors.midnight : AppColors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -359,14 +375,14 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
               child: LinearProgressIndicator(
                 value: ratio,
                 backgroundColor: AppColors.grain.withOpacity(0.6),
-                color: AppColors.midnight,
+                color: AppColors.success,
                 minHeight: 8,
               ),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(isFull ? Icons.check_circle : Icons.bolt, size: 16, color: AppColors.accent),
+                Icon(isFull ? Icons.check_circle : Icons.bolt, size: 16, color: isFull ? AppColors.accent : AppColors.primary),
                 const SizedBox(width: 6),
                 Text(
                   _friendlyCountdown(meeting.meetingTime),
@@ -595,16 +611,17 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
 
     return SafeArea(
       top: false,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, -4),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, -6),
             ),
           ],
         ),
@@ -638,6 +655,11 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                           isFull: isFull,
                           isFinished: isFinished,
                         ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isMember ? AppColors.accent : AppColors.terracotta,
+                  disabledBackgroundColor: AppColors.grain,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
                 child: _isActionLoading
                     ? const SizedBox(
                         height: 18,
@@ -713,20 +735,25 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
           return Column(
             children: [
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                  children: [
-                    _buildHeroHeader(meeting, participants, textTheme),
-                    const SizedBox(height: 16),
-                    _buildParticipationCard(meeting, participants, textTheme),
-                    const SizedBox(height: 16),
-                    _buildLocationCard(meeting, textTheme),
-                    const SizedBox(height: 16),
-                    _buildHostCard(meeting, textTheme),
-                    const SizedBox(height: 16),
-                    _buildDescriptionCard(meeting, textTheme),
-                    const SizedBox(height: 32),
-                  ],
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      children: [
+                        _buildHeroHeader(meeting, participants, textTheme),
+                        const SizedBox(height: 16),
+                        _buildParticipationCard(meeting, participants, textTheme),
+                        const SizedBox(height: 16),
+                        _buildLocationCard(meeting, textTheme),
+                        const SizedBox(height: 16),
+                        _buildHostCard(meeting, textTheme),
+                        const SizedBox(height: 16),
+                        _buildDescriptionCard(meeting, textTheme),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               _buildBottomActionBar(

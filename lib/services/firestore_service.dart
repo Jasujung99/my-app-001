@@ -127,6 +127,13 @@ class FirestoreService {
     return Meeting.fromFirestore(snapshot);
   }
 
+  Stream<List<Meeting>> watchMeetings() {
+    return _meetingCollection
+        .orderBy('meetingTime')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map(Meeting.fromFirestore).toList());
+  }
+
   Future<void> joinMeeting(String meetingId, String userId) async {
     final docRef = _meetingCollection.doc(meetingId);
     await _db.runTransaction((transaction) async {

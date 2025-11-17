@@ -9,6 +9,8 @@ import 'package:myapp/screens/br_detail_screen.dart';
 import 'package:myapp/screens/profile_screen.dart';
 import 'package:myapp/screens/create_meeting_screen.dart';
 import 'package:myapp/screens/meeting_detail_screen.dart'; // 새로 추가
+import 'package:myapp/screens/review_screen.dart';
+import 'package:myapp/screens/honor_screen.dart';
 import 'package:myapp/services/auth_service.dart';
 
 class AppRouter {
@@ -23,7 +25,7 @@ class AppRouter {
       GoRoute(
         path: '/',
         builder: (BuildContext context, GoRouterState state) {
-          return const HomeScreen();
+          return HomeScreen();
         },
       ),
       GoRoute(
@@ -50,6 +52,18 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final meetingId = state.pathParameters['meetingId']!;
           return MeetingDetailScreen(meetingId: meetingId);
+        },
+      ),
+      GoRoute(
+        path: '/review',
+        builder: (BuildContext context, GoRouterState state) {
+          return const ReviewScreen();
+        },
+      ),
+      GoRoute(
+        path: '/honor',
+        builder: (BuildContext context, GoRouterState state) {
+          return const HonorScreen();
         },
       ),
       GoRoute(

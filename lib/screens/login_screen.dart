@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/services/auth_service.dart';
+import 'package:myapp/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -110,25 +111,42 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'BookTalk City',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.oswald(fontSize: 48, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '내 취향의 책으로, 우리 동네 사람들과.',
-                  textAlign: TextAlign.center,
-                  style: textTheme.titleMedium,
-                ),
-                const SizedBox(height: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'BOOKTALK',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'BookTalk City',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.oswald(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '내 취향의 책으로, 우리 동네 사람들과.',
+                    textAlign: TextAlign.center,
+                    style: textTheme.titleMedium?.copyWith(height: 1.3),
+                  ),
+                  const SizedBox(height: 40),
                 TextFormField(
                   controller: _emailController,
                   key: const ValueKey('login_email_field'),
@@ -195,8 +213,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       foregroundColor: Colors.black87,
                     ),
                   ),
-                ]
-              ],
+                  ]
+                ],
+              ),
             ),
           ),
         ),
