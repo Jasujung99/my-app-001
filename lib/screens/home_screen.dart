@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:myapp/theme/app_theme.dart';
+import 'package:myapp/services/auth_service.dart';
 
 // 씨드 데이터 (임시)
 const seedMeetings = [
@@ -60,22 +62,37 @@ class HomeScreen extends StatelessWidget {
             // 상단 앱바
             SliverAppBar(
               floating: true,
+              snap: true,
               backgroundColor: Colors.white.withOpacity(0.9),
               leading: const Padding(
                 padding: EdgeInsets.all(12.0),
-                child: Icon(Icons.menu_book, color: AppColors.ink),
+                child: Icon(Icons.menu_book, color: AppColors.ink, size: 22),
               ),
               title: Text('삼시세독', style: textTheme.titleMedium),
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(right: 16.0),
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: AppColors.grain,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.grain,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: IconButton(
-                      icon: const Icon(Icons.person, size: 16),
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.person, size: 18, color: AppColors.ink),
                       onPressed: () {
-                        // TODO: 프로필 화면으로 이동
+                        final auth = context.read<AuthService>();
+                        final user = auth.currentUser;
+                        if (user == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('로그인이 필요합니다.')),
+                          );
+                          context.go('/login');
+                          return;
+                        }
+                        context.go('/profile/${user.uid}');
                       },
                     ),
                   ),
@@ -86,28 +103,72 @@ class HomeScreen extends StatelessWidget {
             // 영웅 섹션
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                 child: Column(
                   children: [
-                    Text('사람이 중심인', style: textTheme.titleMedium),
-                    Text('독서 커뮤니티', style: textTheme.titleMedium),
-                    const SizedBox(height: 24),
+                    // 별 아이콘
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.midnight.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: 15,
+                            left: 15,
+                            child: Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColors.stardust,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 25,
+                            right: 20,
+                            child: Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: AppColors.stardust,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 20,
+                            left: 30,
+                            child: Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColors.stardust,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('사람이 중심인', style: textTheme.titleSmall),
+                    Text('독서 커뮤니티', style: textTheme.titleSmall),
+                    const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () => context.go('/create-br'),
                           child: const Text('지금 시작'),
                         ),
                         const SizedBox(width: 12),
                         OutlinedButton(
                           onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.ink.withOpacity(0.2)),
-                            foregroundColor: AppColors.ink,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                          ),
                           child: const Text('둘러보기'),
                         ),
                       ],
@@ -117,54 +178,74 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // 모임 목록
+            // 모임 목록 헤더
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              sliver: SliverToBoxAdapter(
+                child: Text('진행중인 모임', style: textTheme.titleMedium),
+              ),
+            ),
+
+            // 모임 카드 목록
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    if (index == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Text('진행중인 모임', style: textTheme.titleMedium),
-                      );
-                    }
-                    final meeting = seedMeetings[index - 1];
+                    final meeting = seedMeetings[index];
                     final statusColor = meeting['status'] == '진행중'
                         ? AppColors.grain
                         : meeting['status'] == '모집중'
-                            ? Colors.green.shade100
+                            ? const Color(0xFFD1FAE5)
                             : AppColors.stardust;
 
                     return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
                         onTap: () => context.go('/meetings/${meeting["id"]}'),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(child: Text(meeting['title'] as String, style: textTheme.titleMedium)),
+                                  Expanded(
+                                    child: Text(
+                                      meeting['title'] as String,
+                                      style: textTheme.titleMedium,
+                                    ),
+                                  ),
                                   const SizedBox(width: 8),
-                                  Chip(
-                                    label: Text(meeting['status'] as String, style: textTheme.bodySmall?.copyWith(color: AppColors.ink)),
-                                    backgroundColor: statusColor,
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                    side: BorderSide.none,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: statusColor,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      meeting['status'] as String,
+                                      style: textTheme.labelMedium,
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text('${meeting['date']} ${meeting['time']}', style: textTheme.bodySmall),
-                              const SizedBox(height: 8),
+                              Text(
+                                '${meeting['date']} ${meeting['time']}',
+                                style: textTheme.bodySmall,
+                              ),
+                              const SizedBox(height: 12),
                               Row(
                                 children: [
-                                  Icon(Icons.people_outline, size: 14, color: textTheme.bodySmall?.color),
+                                  Icon(Icons.people_outline, size: 14, color: AppColors.accent),
                                   const SizedBox(width: 4),
-                                  Text('${meeting['participants']}/${meeting['maxParticipants']}명', style: textTheme.bodySmall),
+                                  Text(
+                                    '${meeting['participants']}/${meeting['maxParticipants']}명',
+                                    style: textTheme.bodySmall,
+                                  ),
                                 ],
                               ),
                             ],
@@ -173,10 +254,12 @@ class HomeScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  childCount: seedMeetings.length + 1,
+                  childCount: seedMeetings.length,
                 ),
               ),
             ),
+
+            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
           ],
         ),
       ),

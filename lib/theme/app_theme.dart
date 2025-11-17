@@ -18,12 +18,14 @@ class AppTheme {
   static final TextTheme _appTextTheme = TextTheme(
     displayLarge: GoogleFonts.lora(fontSize: 57, fontWeight: FontWeight.bold, color: AppColors.ink),
     headlineSmall: GoogleFonts.lora(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.ink),
-    titleLarge: GoogleFonts.lora(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.ink),
-    titleMedium: GoogleFonts.lora(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.ink),
-    bodyLarge: GoogleFonts.notoSansKr(fontSize: 16, color: AppColors.ink, height: 1.6),
-    bodyMedium: GoogleFonts.notoSansKr(fontSize: 14, color: AppColors.ink),
-    bodySmall: GoogleFonts.notoSansKr(fontSize: 12, color: AppColors.accent),
-    labelLarge: GoogleFonts.notoSansKr(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+    titleLarge: GoogleFonts.lora(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.ink, letterSpacing: -0.2),
+    titleMedium: GoogleFonts.lora(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.ink, letterSpacing: -0.1),
+    titleSmall: GoogleFonts.lora(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
+    bodyLarge: GoogleFonts.notoSansKr(fontSize: 15, color: AppColors.ink, height: 1.6, letterSpacing: -0.1),
+    bodyMedium: GoogleFonts.notoSansKr(fontSize: 13, color: AppColors.ink, height: 1.5),
+    bodySmall: GoogleFonts.notoSansKr(fontSize: 12, color: AppColors.accent, height: 1.4),
+    labelLarge: GoogleFonts.notoSansKr(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: -0.2),
+    labelMedium: GoogleFonts.notoSansKr(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink),
   );
 
   static final ThemeData lightTheme = ThemeData(
@@ -45,28 +47,68 @@ class AppTheme {
     ),
     // 카드 테마
     cardTheme: CardThemeData(
-      elevation: 1,
+      elevation: 0,
+      shadowColor: AppColors.midnight.withOpacity(0.08),
       color: Colors.white.withOpacity(0.9),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      margin: const EdgeInsets.only(bottom: 12),
     ),
     // 버튼 테마
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.midnight,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
         textStyle: _appTextTheme.labelLarge,
       ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.ink,
+        side: BorderSide(color: AppColors.ink.withOpacity(0.15), width: 1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        textStyle: _appTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: AppColors.grain,
+      labelStyle: _appTextTheme.labelMedium,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      side: BorderSide.none,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.95),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: AppColors.grain, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: AppColors.grain, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: AppColors.midnight, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: _appTextTheme.bodyMedium,
     ),
     // 하단 탭 바 테마
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: Colors.white.withOpacity(0.95),
       selectedItemColor: AppColors.midnight,
       unselectedItemColor: AppColors.accent,
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
+      elevation: 0,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      selectedLabelStyle: _appTextTheme.labelMedium?.copyWith(fontSize: 11),
+      unselectedLabelStyle: _appTextTheme.labelMedium?.copyWith(fontSize: 11),
       type: BottomNavigationBarType.fixed,
     ),
   );

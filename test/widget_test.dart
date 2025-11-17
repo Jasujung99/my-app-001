@@ -1,30 +1,92 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:myapp/main.dart';
+import 'package:myapp/screens/login_screen.dart';
+import 'package:myapp/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  Widget buildTestApp(AuthService authService) {
+    return ChangeNotifierProvider<AuthService>.value(
+      value: authService,
+      child: const MaterialApp(home: LoginScreen()),
+    );
+  }
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('회원가입 시 비밀번호가 일치하지 않으면 에러가 표시된다', (tester) async {
+    final authService = _StubAuthService();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpWidget(buildTestApp(authService));
+
+    await tester.enterText(find.byKey(const ValueKey('login_email_field')), 'user@example.com');
+    await tester.enterText(find.byKey(const ValueKey('login_password_field')), 'password123');
+    await tester.enterText(find.byKey(const ValueKey('register_confirm_field')), 'different');
+
+    await tester.tap(find.text('새로운 계정 만들기'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('비밀번호가 일치하지 않습니다.'), findsOneWidget);
   });
+
+  testWidgets('회원가입 실패 메시지가 스낵바로 노출된다', (tester) async {
+    final authService = _StubAuthService()
+      ..registerHandler = (_, __) => const AuthResult(
+            errorMessage: '이미 가입된 이메일입니다.',
+          );
+
+    await tester.pumpWidget(buildTestApp(authService));
+
+    await tester.enterText(find.byKey(const ValueKey('login_email_field')), 'user@example.com');
+    await tester.enterText(find.byKey(const ValueKey('login_password_field')), 'password123');
+    await tester.enterText(find.byKey(const ValueKey('register_confirm_field')), 'password123');
+
+    await tester.tap(find.text('새로운 계정 만들기'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('이미 가입된 이메일입니다.'), findsOneWidget);
+  });
+
+  testWidgets('회원가입 성공 시 완료 메시지를 보여준다', (tester) async {
+    final authService = _StubAuthService()
+      ..registerHandler = (_, __) => AuthResult(
+            user: MockUser(email: 'user@example.com', uid: 'uid-123'),
+          );
+
+    await tester.pumpWidget(buildTestApp(authService));
+
+    await tester.enterText(find.byKey(const ValueKey('login_email_field')), 'user@example.com');
+    await tester.enterText(find.byKey(const ValueKey('login_password_field')), 'password123');
+    await tester.enterText(find.byKey(const ValueKey('register_confirm_field')), 'password123');
+
+    await tester.tap(find.text('새로운 계정 만들기'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('회원가입이 완료되었습니다! 자동으로 로그인됩니다.'), findsOneWidget);
+  });
+}
+
+class _StubAuthService extends AuthService {
+  _StubAuthService()
+      : super(
+          firebaseAuth: MockFirebaseAuth(),
+          firestore: FakeFirebaseFirestore(),
+        );
+
+  AuthResult Function(String email, String password)? loginHandler;
+  AuthResult Function(String email, String password)? registerHandler;
+
+  @override
+  Future<AuthResult> signInWithEmailAndPassword(String email, String password) async {
+    if (loginHandler != null) return loginHandler!(email, password);
+    return const AuthResult(errorMessage: '로그인 실패 (stub)');
+  }
+
+  @override
+  Future<AuthResult> createUserWithEmailAndPassword(String email, String password) async {
+    if (registerHandler != null) return registerHandler!(email, password);
+    return const AuthResult(errorMessage: '회원가입 실패 (stub)');
+  }
 }

@@ -47,7 +47,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('프로필')),
+      appBar: AppBar(
+        title: const Text('프로필'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'logout') {
+                final authService = context.read<AuthService>();
+                await authService.signOut();
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('로그아웃되었습니다.')),
+                );
+                context.go('/login');
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'logout',
+                child: Text('로그아웃'),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: FutureBuilder<List<BookRequest>>(
         future: _userBRsFuture,
         builder: (context, snapshot) {

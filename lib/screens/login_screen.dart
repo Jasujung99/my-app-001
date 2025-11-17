@@ -16,58 +16,81 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+  bool _validateRegisterFields = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  bool _validateForm({required bool forRegister}) {
+    _validateRegisterFields = forRegister;
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (forRegister) {
+      _validateRegisterFields = false;
+    }
+    return isValid;
+  }
+
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_validateForm(forRegister: false)) return;
+
+    FocusScope.of(context).unfocus();
 
     setState(() => _isLoading = true);
 
     final authService = Provider.of<AuthService>(context, listen: false);
-    final user = await authService.signInWithEmailAndPassword(
+    final result = await authService.signInWithEmailAndPassword(
       _emailController.text,
       _passwordController.text,
     );
 
     if (!mounted) return;
 
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')),
-      );
+    if (!result.isSuccess) {
+      _showSnackBar(result.errorMessage ?? '로그인에 실패했습니다. 다시 시도해주세요.');
     }
     
     setState(() => _isLoading = false);
   }
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_validateForm(forRegister: true)) return;
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showSnackBar('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
 
     setState(() => _isLoading = true);
     
     final authService = Provider.of<AuthService>(context, listen: false);
-    final user = await authService.createUserWithEmailAndPassword(
+    final result = await authService.createUserWithEmailAndPassword(
       _emailController.text,
       _passwordController.text,
     );
     
     if (!mounted) return;
 
-    if (user == null) {
-       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원가입에 실패했습니다. 다른 이메일을 사용해보세요.')),
+    if (!result.isSuccess) {
+      _showSnackBar(
+        result.errorMessage ?? '회원가입에 실패했습니다. 입력한 정보를 확인해주세요.',
       );
     } else {
-       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원가입이 완료되었습니다! 자동으로 로그인됩니다.')),
-      );
+      _showSnackBar('회원가입이 완료되었습니다! 자동으로 로그인됩니다.');
     }
 
     setState(() => _isLoading = false);
@@ -108,6 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 48),
                 TextFormField(
                   controller: _emailController,
+                  key: const ValueKey('login_email_field'),
                   decoration: const InputDecoration(labelText: '이메일', border: OutlineInputBorder()),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) => (value == null || !value.contains('@')) ? '유효한 이메일을 입력해주세요.' : null,
@@ -115,9 +139,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
+                  key: const ValueKey('login_password_field'),
                   decoration: const InputDecoration(labelText: '비밀번호', border: OutlineInputBorder()),
                   obscureText: true,
                   validator: (value) => (value == null || value.length < 6) ? '6자 이상의 비밀번호를 입력해주세요.' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  key: const ValueKey('register_confirm_field'),
+                  decoration: const InputDecoration(labelText: '비밀번호 확인', border: OutlineInputBorder()),
+                  obscureText: true,
+                  validator: (value) {
+                    if (!_validateRegisterFields) return null;
+                    if (value == null || value.isEmpty) {
+                      return '비밀번호를 한번 더 입력해주세요.';
+                    }
+                    if (value != _passwordController.text) {
+                      return '비밀번호가 일치하지 않습니다.';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
                 if (_isLoading)

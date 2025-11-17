@@ -9,6 +9,8 @@
 *   **당근 스타일 모임 기능:** 동네 기반의 쉽고 빠른 독서 모임 생성 및 참여.
 *   **GitHub PR 스타일 토론:** "독서 노트(Book Request)"를 통한 깊이 있고 구조화된 토론.
 *   **Create-to-Earn (C2E) 수익 모델:** 활동을 통해 포인트를 획득하고 사용하는 지속가능한 경제 시스템.
+*   **관리자 전담 조직 운영:** 모든 오거나이저 권한은 내부 관리자만 갖고, 필요시 관리자 도구로 모임을 배정합니다.
+*   **지도 기반 장소 탐색:** Google Places Autocomplete(Option C)로 모임 장소를 검색/선택하고, 참석자에게 지도 미리보기를 제공합니다.
 
 ## 3. 🏗️ MVP 기능 설계
 
@@ -29,12 +31,35 @@
     *   **서비스 로직:** `FirestoreService`에 `createMeeting` 메소드를 추가하여, 주최자를 자동으로 참여자에 포함시키는 새로운 모임을 생성하는 로직을 구현했습니다.
     *   **UI/라우팅 통합:** `go_router`에 `/create-meeting` 경로를 추가하고, `HomeScreen`의 `FloatingActionButton` 시스템을 개편하여 BR 작성과 모임 생성을 분리했습니다.
 
+### **Phase 4: 관리자·위치 UX (진행 예정)**
+
+*   **관리자 전용 오거나이저 체계**
+    *   모임 생성 권한은 관리자에게만 부여하며, 관리자 콘솔(또는 Firebase Console)에서 담당자를 지정합니다.
+    *   `User`/`Meeting` 문서에 `isAdmin`, `assignedOrganizerId` 필드를 추가하여 권한을 명시합니다.
+
+*   **관리자 포스트 카테고리 + 포인트 정책**
+    *   공지 외의 모든 관리자 글(예: 온라인 큐레이션, 구독용 콘텐츠)은 작성 시 `무료`/`구독` 카테고리를 선택해야 합니다.
+    *   포인트 차감은 `구독` 카테고리 글에 한해 적용되며, 일반 공지/공지형 BR은 포인트 경제와 분리합니다.
+
+*   **지도 기반 모임 위치 입력**
+    *   Google Places Autocomplete(Option C)로 장소를 검색해 Place ID, 주소, 위경도를 저장합니다.
+    *   저장된 좌표를 이용해 미팅 카드/상세 화면에서 미니 맵을 렌더링하여 당근 스타일 UX를 제공합니다.
+
 ### **향후 확장 계획**
 
 *   **모임 상세/참여:** `MeetingDetailScreen`을 만들어 모임 참여/탈퇴, 참여자 목록 확인 기능을 구현합니다.
 *   **실시간 채팅:** 각 모임별로 실시간 채팅방을 제공합니다.
 *   **AI 어시스턴트:** BR 요약, 토론 주제 제안 등 AI 기능을 도입합니다.
 *   **고급 검색/필터링:** 지역, 책, 모임 유형별로 검색하는 기능을 추가합니다.
+*   **관리자 툴킷:** 내부 관리자 UI에서 오거나이저 배정, 포스트 카테고리 설정, Places API 키 회전 등을 제어합니다.
+*   **지도/장소 컴포넌트:** `CreateMeetingScreen`의 장소 입력 필드를 Places Autocomplete로 교체하고, `MeetingDetailScreen`에 지도를 추가합니다.
+
+### **Implementation Backlog (Short-term)**
+
+1. 데이터 모델 업데이트: `users`에 `roles`/`isAdmin`, `book_requests`에 `category`, `meetings`에 `placeId`, `placeName`, `lat`, `lng` 필드 추가.
+2. 관리자 작성 플로우: BR/콘텐츠 작성 시 공지 vs 무료 vs 구독 라디오 버튼 + 포인트 차감 로직 연동.
+3. 위치 UX: Google Places Autocomplete 위젯 도입, 선택한 장소를 미니 맵(Static Map 또는 Flutter Map)으로 미리보기.
+4. 보안 규칙: 관리자만 오거나이저 필드 수정 가능, 구독형 컨텐츠 접근 시 포인트 확인 트랜잭션 추가.
 
 ## 4. 💻 기술 스택
 
