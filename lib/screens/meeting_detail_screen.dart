@@ -1,6 +1,7 @@
 // lib/screens/meeting_detail_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:myapp/theme/app_theme.dart';
 
 // 임시 데이터. 실제로는 라우터 파라미터로 받은 ID로 Firestore에서 조회해야 함.
@@ -37,7 +38,7 @@ class MeetingDetailScreen extends StatelessWidget {
         backgroundColor: Colors.white.withOpacity(0.9),
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.pop(),
         ),
         title: Text('모임 상세', style: textTheme.titleMedium),
       ),
