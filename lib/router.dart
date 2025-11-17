@@ -25,35 +25,32 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           return const HomeScreen();
         },
-        routes: <GoRoute>[
-          GoRoute(
-            path: 'create-br',
-            builder: (BuildContext context, GoRouterState state) {
-              return CreateBRScreen();
-            },
-          ),
-          GoRoute(
-            path: 'create-meeting',
-            builder: (BuildContext context, GoRouterState state) {
-              return CreateMeetingScreen();
-            },
-          ),
-          GoRoute(
-            path: 'br/:brId',
-            builder: (BuildContext context, GoRouterState state) {
-              final brId = state.pathParameters['brId']!;
-              return BRDetailScreen(brId: brId);
-            },
-          ),
-          // 모임 상세 페이지를 위한 동적 경로 추가
-          GoRoute(
-            path: 'meetings/:meetingId',
-            builder: (BuildContext context, GoRouterState state) {
-              final meetingId = state.pathParameters['meetingId']!;
-              return MeetingDetailScreen(meetingId: meetingId);
-            },
-          ),
-        ],
+      ),
+      GoRoute(
+        path: '/create-br',
+        builder: (BuildContext context, GoRouterState state) {
+          return CreateBRScreen();
+        },
+      ),
+      GoRoute(
+        path: '/create-meeting',
+        builder: (BuildContext context, GoRouterState state) {
+          return CreateMeetingScreen();
+        },
+      ),
+      GoRoute(
+        path: '/br/:brId',
+        builder: (BuildContext context, GoRouterState state) {
+          final brId = state.pathParameters['brId']!;
+          return BRDetailScreen(brId: brId);
+        },
+      ),
+      GoRoute(
+        path: '/meetings/:meetingId',
+        builder: (BuildContext context, GoRouterState state) {
+          final meetingId = state.pathParameters['meetingId']!;
+          return MeetingDetailScreen(meetingId: meetingId);
+        },
       ),
       GoRoute(
         path: '/login',
